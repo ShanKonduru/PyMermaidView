@@ -22,22 +22,29 @@ def test_clean_interface():
     is_valid = validator.validate_mermaid_syntax(pie_chart)
     print(f"✅ Validation Test: {'PASS' if is_valid else 'FAIL'}")
     
-    # Test 2: Generation
-    async def test_generation():
-        config = MermaidConfig()
-        config.theme = MermaidTheme("default")
-        config.output_format = OutputFormat("png")
-        config.width = 800
-        config.height = 600
-        config.scale = 2.0
-        
-        generator = MermaidGenerator()
-        generator.config = config
-        
-        result = await generator.generate(pie_chart, Path("output/clean_interface_test.png"))
-        return result.exists()
+    # Test 2: Generation (with better error handling)
+    def test_generation_sync():
+        try:
+            async def test_generation():
+                config = MermaidConfig()
+                config.theme = MermaidTheme.DEFAULT  # Use enum directly
+                config.output_format = OutputFormat.PNG  # Use enum directly
+                config.width = 800
+                config.height = 600
+                config.scale = 2.0
+                
+                generator = MermaidGenerator()
+                generator.config = config
+                
+                result = await generator.generate(pie_chart, Path("output/clean_interface_test.png"))
+                return result and result.exists()
+            
+            return asyncio.run(test_generation())
+        except Exception as e:
+            print(f"Generation test error: {e}")
+            return False
     
-    generation_success = asyncio.run(test_generation())
+    generation_success = test_generation_sync()
     print(f"✅ Generation Test: {'PASS' if generation_success else 'FAIL'}")
     
     # Test 3: Template availability

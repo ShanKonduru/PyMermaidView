@@ -115,14 +115,31 @@ class PlaywrightMermaidRenderer(IMermaidRenderer):
         await self._cleanup()
     
     async def _initialize_browser(self):
-        """Initialize Playwright browser."""
+        """Initialize Playwright browser with robust settings."""
         try:
             self.playwright = await async_playwright().start()
-            self.browser = await self.playwright.chromium.launch(headless=True)
-            self.page = await self.browser.new_page()
             
-            # Set viewport size
-            await self.page.set_viewport_size({"width": 1200, "height": 800})
+            # Launch browser with more stable settings
+            self.browser = await self.playwright.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox', 
+                    '--disable-dev-shm-usage',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor'
+                ]
+            )
+            
+            # Create page with better timeout settings
+            context = await self.browser.new_context(
+                viewport={'width': 1200, 'height': 800}
+            )
+            self.page = await context.new_page()
+            
+            # Set longer default timeouts
+            self.page.set_default_timeout(60000)  # 60 seconds
+            self.page.set_default_navigation_timeout(60000)
             
         except Exception as e:
             await self._cleanup()  # Cleanup on error
@@ -169,28 +186,38 @@ class PlaywrightMermaidRenderer(IMermaidRenderer):
             return False
     
     async def render(self, mermaid_code: str, config: MermaidConfig) -> bytes:
-        """Render Mermaid diagram to image bytes."""
+        """Render Mermaid diagram to image bytes with retry logic."""
         if not self.page:
             raise MermaidGenerationError("Browser not initialized")
         
-        try:
-            # Generate HTML with Mermaid diagram
-            html_content = await self._render_mermaid_html(mermaid_code, config)
-            
-            # Load HTML in browser
-            await self.page.set_content(html_content)
-            
-            # Wait for Mermaid to render
-            await self.page.wait_for_selector('#mermaid-diagram', timeout=10000)
-            
-            # Take screenshot based on format
-            if config.output_format == OutputFormat.SVG:
-                return await self._get_svg_content()
-            else:
-                return await self._take_screenshot(config)
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                # Generate HTML with Mermaid diagram
+                html_content = await self._render_mermaid_html(mermaid_code, config)
                 
-        except Exception as e:
-            raise MermaidGenerationError(f"Failed to render diagram: {e}")
+                # Load HTML in browser with longer timeout
+                await self.page.set_content(html_content, timeout=60000)
+                
+                # Wait for Mermaid to render with longer timeout
+                await self.page.wait_for_selector('#mermaid-diagram', timeout=30000)
+                
+                # Additional wait for complex diagrams
+                await asyncio.sleep(1)
+                
+                # Take screenshot based on format
+                if config.output_format == OutputFormat.SVG:
+                    return await self._get_svg_content()
+                else:
+                    return await self._take_screenshot(config)
+                    
+            except Exception as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    raise MermaidGenerationError(f"Failed to render diagram after {max_retries} attempts: {e}")
+                
+                # Wait before retry
+                await asyncio.sleep(2)
+                continue
     
     async def _render_mermaid_html(self, mermaid_code: str, config: MermaidConfig) -> str:
         """Generate HTML content with Mermaid diagram."""

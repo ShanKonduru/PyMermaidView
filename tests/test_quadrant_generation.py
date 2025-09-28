@@ -2,10 +2,12 @@
 """
 Test quadrant chart generation
 """
+import pytest
 import asyncio
 from pathlib import Path
 from src.mermaid_generator import MermaidGenerator, MermaidConfig, OutputFormat, MermaidTheme
 
+@pytest.mark.asyncio
 async def test_quadrant_generation():
     """Test generating a quadrant chart image"""
     

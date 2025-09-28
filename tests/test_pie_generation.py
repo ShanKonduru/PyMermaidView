@@ -2,10 +2,12 @@
 """
 Test pie chart generation
 """
+import pytest
 import asyncio
 from pathlib import Path
 from src.mermaid_generator import MermaidGenerator, MermaidConfig, OutputFormat, MermaidTheme
 
+@pytest.mark.asyncio
 async def test_pie_generation():
     """Test generating a pie chart image"""
     
