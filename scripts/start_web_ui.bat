@@ -15,4 +15,5 @@ echo 💡 Press Ctrl+C to stop the server
 echo.
 pause
 echo Starting Streamlit server...
+cd ..
 streamlit run streamlit_app.py

@@ -1,11 +1,23 @@
 @echo off
 echo "Setting up PyMermaidView project..."
 
-echo "Upgrading pip..."
-python -m pip install --upgrade pip
-
-echo "Installing Python dependencies..."
-pip install -r requirements.txt
+REM Check if we're already in the project root or in scripts directory
+if exist "src\" (
+    REM We're in project root
+    echo "Upgrading pip..."
+    python -m pip install --upgrade pip
+    
+    echo "Installing Python dependencies..."
+    pip install -r requirements.txt
+) else (
+    REM We're in scripts directory, go up one level
+    cd ..
+    echo "Upgrading pip..."
+    python -m pip install --upgrade pip
+    
+    echo "Installing Python dependencies..."
+    pip install -r requirements.txt
+)
 
 echo "Installing Playwright browsers for image generation..."
 playwright install chromium
