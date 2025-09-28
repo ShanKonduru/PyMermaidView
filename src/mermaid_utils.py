@@ -264,9 +264,9 @@ class FlowchartValidator:
             diagram_type = 'gitgraph'
         elif first_line.startswith('gantt'):
             diagram_type = 'gantt'
-        elif first_line.startswith('sequencediagram') or first_line.startswith('sequencediagram'):
+        elif first_line.startswith('sequencediagram'):
             diagram_type = 'sequence'
-        elif first_line.startswith('classDiagram'):
+        elif first_line.startswith('classdiagram'):
             diagram_type = 'class'
         elif first_line.startswith('statediagram'):
             diagram_type = 'state'
