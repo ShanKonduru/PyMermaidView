@@ -258,6 +258,8 @@ class FlowchartValidator:
             diagram_type = 'graph'
         elif first_line.startswith('pie'):
             diagram_type = 'pie'
+        elif first_line.startswith('quadrantchart'):
+            diagram_type = 'quadrant'
         elif first_line.startswith('gitgraph'):
             diagram_type = 'gitgraph'
         elif first_line.startswith('gantt'):
@@ -290,6 +292,8 @@ class FlowchartValidator:
             return self._validate_flowchart_syntax(lines)
         elif diagram_type == 'pie':
             return self._validate_pie_syntax(lines)
+        elif diagram_type == 'quadrant':
+            return self._validate_quadrant_syntax(lines)
         else:
             # For other types, do basic validation
             self.warnings.append(f"Basic validation only for {diagram_type} diagrams")
@@ -347,6 +351,52 @@ class FlowchartValidator:
         
         if not has_data:
             self.errors.append("Pie chart must have data entries")
+        
+        return len(self.errors) == 0
+    
+    def _validate_quadrant_syntax(self, lines) -> bool:
+        """Validate quadrant chart syntax."""
+        has_title = False
+        has_x_axis = False
+        has_y_axis = False
+        has_quadrants = False
+        has_data_points = False
+        
+        for line_num, line in enumerate(lines, 1):
+            if line.startswith('%%'):
+                continue
+                
+            line_lower = line.lower()
+            
+            if line_lower.startswith('quadrantchart'):
+                continue
+            elif line_lower.strip().startswith('title '):
+                has_title = True
+            elif line_lower.strip().startswith('x-axis '):
+                has_x_axis = True
+            elif line_lower.strip().startswith('y-axis '):
+                has_y_axis = True
+            elif line_lower.strip().startswith('quadrant-'):
+                has_quadrants = True
+            elif ':' in line and '[' in line and ']' in line:
+                # Data point format: "Name: [x, y]"
+                has_data_points = True
+        
+        # Check required elements
+        if not has_title:
+            self.warnings.append("Quadrant chart should have a title")
+        
+        if not has_x_axis:
+            self.errors.append("Quadrant chart must have x-axis definition")
+        
+        if not has_y_axis:
+            self.errors.append("Quadrant chart must have y-axis definition")
+        
+        if not has_quadrants:
+            self.warnings.append("Quadrant chart should define quadrant labels")
+        
+        if not has_data_points:
+            self.warnings.append("Quadrant chart should have data points")
         
         return len(self.errors) == 0
     
