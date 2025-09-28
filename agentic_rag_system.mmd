@@ -1,0 +1,77 @@
+flowchart TD
+    User[👤 User Query] --> Interface{Interface Type}
+    
+    Interface -->|CLI Mode| CLI[🖥️ Interactive CLI]
+    Interface -->|API Mode| API[🌐 FastAPI Server]
+    Interface -->|Single Query| Direct[⚡ Direct Processing]
+    
+    CLI --> System[🎯 AgenticRAG System]
+    API --> System
+    Direct --> System
+    
+    System --> Config[⚙️ Configuration Manager]
+    Config --> LLM[🤖 Language Model<br/>Ollama/OpenAI]
+    Config --> VectorDB[🔍 Vector Database<br/>ChromaDB/Qdrant]
+    
+    System --> StateManager[📊 Enhanced State Manager]
+    StateManager --> Memory[🧠 Agent Memory]
+    StateManager --> ErrorHandler[❌ Error Handler]
+    StateManager --> Metrics[📈 Performance Metrics]
+    
+    System --> DataManager[📁 Data Source Manager]
+    DataManager --> FileSource[📄 File Sources<br/>PDF, DOCX, TXT, JSON]
+    DataManager --> WebSource[🌐 Web Sources<br/>URL Scraping]
+    DataManager --> DBSource[🗄️ Database Sources<br/>SQL Queries]
+    DataManager --> APISource[🔗 API Sources<br/>REST Endpoints]
+    
+    FileSource --> Processing[⚡ Document Processing]
+    WebSource --> Processing
+    DBSource --> Processing
+    APISource --> Processing
+    
+    Processing --> Chunking[✂️ Text Chunking]
+    Processing --> Embedding[🔢 Embedding Generation]
+    Chunking --> VectorDB
+    Embedding --> VectorDB
+    
+    System --> AgentOrchestrator[🎭 Agent Orchestrator]
+    
+    AgentOrchestrator --> PlanningAgent[🎯 Planning Agent]
+    PlanningAgent --> ReactReasoning[🤔 ReAct Reasoning]
+    ReactReasoning --> ExecutionPlan[📋 Execution Plan]
+    
+    ExecutionPlan --> RetrievalAgents[🔍 Retrieval Agents]
+    RetrievalAgents --> LocalRAG[📚 Local RAG Agent]
+    RetrievalAgents --> WebSearch[🌐 Web Search Agent]
+    RetrievalAgents --> DatabaseAgent[🗄️ Database Agent]
+    
+    LocalRAG --> VectorSearch[🔎 Vector Search]
+    VectorSearch --> VectorDB
+    VectorDB --> SearchResults[📋 Search Results]
+    
+    SearchResults --> AggregatorAgent[🎯 Aggregator Agent]
+    AggregatorAgent --> Synthesis[⚗️ Response Synthesis]
+    Synthesis --> QualityAssessment[✅ Quality Assessment]
+    QualityAssessment --> FinalResponse[📝 Final Response]
+    
+    FinalResponse --> ResponseDelivery{Response Delivery}
+    ResponseDelivery -->|CLI| CLIOutput[🖥️ CLI Output]
+    ResponseDelivery -->|API| JSONResponse[📄 JSON Response]
+    ResponseDelivery -->|Direct| PythonObject[🐍 Python Object]
+    
+    System --> Monitoring[📊 System Monitoring]
+    Monitoring --> Logging[📝 Comprehensive Logging]
+    Monitoring --> HealthChecks[💚 Health Checks]
+    Monitoring --> Analytics[📈 Performance Analytics]
+    
+    classDef userNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef systemNode fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef agentNode fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef dataNode fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef outputNode fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+    
+    class User,Interface,CLI,API,Direct userNode
+    class System,AgentOrchestrator,StateManager,Config systemNode
+    class PlanningAgent,LocalRAG,WebSearch,DatabaseAgent,AggregatorAgent agentNode
+    class DataManager,FileSource,WebSource,DBSource,VectorDB dataNode
+    class FinalResponse,CLIOutput,JSONResponse,PythonObject outputNode
