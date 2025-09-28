@@ -1,0 +1,21 @@
+---
+title: Software Development
+---
+flowchart TD
+    start([Start])
+    step_1[Requirements]
+    step_2[Design]
+    decision_3{Continue?}
+    step_3[Implementation]
+    alt_3[Alternative Action]
+    step_4[Testing]
+    step_5[Deployment]
+    end([End])
+    start --> step_1
+    step_1 --> step_2
+    step_2 --> decision_3
+    decision_3 --> |Yes| step_3
+    decision_3 --> |No| alt_3
+    step_3 --> step_4
+    step_4 --> step_5
+    step_5 --> end

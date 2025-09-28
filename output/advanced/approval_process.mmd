@@ -1,0 +1,22 @@
+---
+title: Purchase Request Approval Process Flow
+---
+flowchart TD
+    step_start([Request Submitted])
+    step_review[Initial Review]
+    decision_approval{Approved?}
+    step_approved([Request Approved])
+    step_rejected([Request Rejected])
+    step_revision[Request Revision]
+    step_start --> step_review
+    step_review --> step_approved
+    step_approved --> step_rejected
+    step_rejected --> step_revision
+    decision_approval --> |Approved| step_approved
+    decision_approval --> |Rejected| step_rejected
+    decision_approval ==> |Needs Revision (default)| step_revision
+    style step_start fill:#f8f9fa,stroke:#6c757d,stroke-width:1px
+    style step_review fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+    style step_approved fill:#f8f9fa,stroke:#6c757d,stroke-width:1px
+    style step_rejected fill:#f8f9fa,stroke:#6c757d,stroke-width:1px
+    style step_revision fill:#f8f9fa,stroke:#6c757d,stroke-width:1px

@@ -1,0 +1,18 @@
+---
+title: Customer Support Process
+---
+flowchart TD
+    start([Start])
+    input[Receive Support Request]
+    decision{Issue Type Known?}
+    process[Resolve Issue]
+    error[Escalate to Specialist]
+    end([End])
+    start --> input
+    input --> decision
+    decision --> |Yes| process
+    decision --> |No| error
+    process --> end
+    error --> input
+    style error fill:#ffcccc,stroke:#ff0000
+    style process fill:#ccffcc,stroke:#00aa00

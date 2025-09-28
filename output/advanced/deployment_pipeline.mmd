@@ -1,0 +1,31 @@
+---
+title: CI/CD Pipeline Process Flow
+---
+flowchart TD
+    step_commit([Code Commit])
+    step_build[Build Application]
+    step_test[Run Tests]
+    step_security_scan[Security Scan]
+    step_deploy_staging[Deploy to Staging]
+    step_integration_test[Integration Tests]
+    step_deploy_prod([Deploy to Production])
+    decision_quality_gate{All Checks Pass?}
+    step_rollback[Rollback Deployment]
+    step_commit --> step_build
+    step_build --> step_test
+    step_test --> step_security_scan
+    step_security_scan --> step_deploy_staging
+    step_deploy_staging --> step_integration_test
+    step_integration_test --> step_deploy_prod
+    step_deploy_prod --> step_rollback
+    decision_quality_gate --> |Pass| step_integration_test
+    decision_quality_gate --> |Fail| step_rollback
+    classDef compliance stroke-dasharray: 5 5
+    style step_commit fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_build fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_test fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_security_scan fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_deploy_staging fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_integration_test fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_deploy_prod fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+    style step_rollback fill:#e8f5e8,stroke:#28a745,stroke-width:2px

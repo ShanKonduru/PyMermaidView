@@ -1,0 +1,26 @@
+---
+title: Order Fulfillment Process Flow
+---
+flowchart TD
+    step_order_received([Order Received])
+    step_validate[Validate Order]
+    step_check_inventory[Check Inventory]
+    step_reserve_items[Reserve Items]
+    step_process_payment[Process Payment]
+    step_confirm_payment[Confirm Payment]
+    step_prepare_shipment((Prepare Shipment))
+    subgraph parallel_fulfillment [Parallel Execution: Order Processing]
+    end
+    step_order_received --> step_validate
+    step_validate --> step_prepare_shipment
+    step_check_inventory --> step_reserve_items
+    step_reserve_items -.-> step_prepare_shipment
+    step_process_payment --> step_confirm_payment
+    step_confirm_payment -.-> step_prepare_shipment
+    style step_order_received fill:#f8f9fa,stroke:#6c757d,stroke-width:1px
+    style step_validate fill:#f8f9fa,stroke:#6c757d,stroke-width:1px
+    style step_check_inventory fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_reserve_items fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_process_payment fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+    style step_confirm_payment fill:#e8f5e8,stroke:#28a745,stroke-width:2px
+    style step_prepare_shipment fill:#f8f9fa,stroke:#6c757d,stroke-width:1px

@@ -1,0 +1,25 @@
+---
+title: E-Commerce Order Processing
+---
+flowchart LR
+    start([Order Received])
+    validate_order[Validate Order]
+    stock_check{Items in Stock?}
+    complete([Order Complete])
+    subgraph payment [Payment Processing]
+        process_payment[Process Payment]
+        payment_ok{Payment Success?}
+    end
+    subgraph fulfillment [Order Fulfillment]
+        pick_items[Pick Items]
+        pack_order[Pack Order]
+        ship_order[Ship Order]
+    end
+    start --> validate_order
+    validate_order --> stock_check
+    stock_check --> |Yes| process_payment
+    payment_ok --> |Success| pick_items
+    pick_items --> pack_order
+    pack_order --> ship_order
+    ship_order --> complete
+    classDef highlight fill:#ffeb3b,stroke:#f57f17,stroke-width:3px

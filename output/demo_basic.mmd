@@ -1,0 +1,18 @@
+---
+title: Sample Login Process
+---
+flowchart TD
+    start([Start])
+    login[User Login]
+    validate{Valid Credentials?}
+    dashboard[Show Dashboard]
+    error[Show Error]
+    end([End])
+    start --> login
+    login --> |Submit| validate
+    validate --> |Yes| dashboard
+    validate --> |No| error
+    dashboard --> end
+    error --> login
+    style dashboard fill:#d4f8d4,stroke:#28a745
+    style error fill:#f8d7da,stroke:#dc3545
