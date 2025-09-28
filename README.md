@@ -34,6 +34,43 @@ A comprehensive Python application for generating Mermaid diagrams using Object-
 5.  **Run demonstrations:**
     Run the `004_run.bat` file or `python main.py`.
 
+## 🌐 Web Interface (NEW!)
+
+PyMermaidView now includes a powerful **Streamlit-based web interface** for interactive diagram creation!
+
+### 🚀 Launch Web Interface
+
+**Method 1: One-Click Launch**
+```bash
+# Double-click or run:
+start_web_ui.bat
+```
+
+**Method 2: Command Line**
+```bash
+streamlit run streamlit_app.py
+# Opens at: http://localhost:8501
+```
+
+### ✨ Web Interface Features
+
+- **📝 Interactive Editor**: Real-time Mermaid code editing with syntax highlighting
+- **🔍 Live Validation**: Instant syntax checking and error feedback
+- **🗂️ Template Gallery**: Built-in templates with one-click loading
+- **⚡ Quick Builder**: Generate flowcharts from simple step descriptions
+- **🎨 Multi-Theme Generation**: Create all 4 themes with one button
+- **👁️ Live Preview**: See your diagrams as you create them
+- **⬇️ Easy Downloads**: Direct download of high-resolution images
+- **📱 Responsive Design**: Works on desktop and tablets
+
+### 🎯 Perfect for:
+- **Rapid Prototyping**: Quick flowchart creation and iteration
+- **Team Collaboration**: Share the web interface for team diagram creation
+- **Learning**: Interactive environment for learning Mermaid syntax
+- **Presentations**: Generate multiple themed versions for different contexts
+
+📖 **[Complete Web Interface Guide](WEB_UI_GUIDE.md)**
+
 ### Basic Programmatic Usage
 
 ```python

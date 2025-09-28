@@ -16,6 +16,10 @@ pytest-html>=4.1.0
 pytest-cov>=4.0.0
 pytest-asyncio>=0.23.0
 
+# Web UI dependencies
+streamlit>=1.28.0
+streamlit-ace>=0.1.1
+
 # Optional dependencies for advanced features
 matplotlib>=3.7.0
 cairosvg>=2.7.0

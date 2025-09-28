@@ -237,13 +237,67 @@ class FlowchartValidator:
         return len(self.errors) == 0
     
     def validate_mermaid_syntax(self, mermaid_code: str) -> bool:
-        """Validate Mermaid syntax string."""
+        """Validate Mermaid syntax string for various diagram types."""
         self.errors.clear()
         self.warnings.clear()
         
         lines = [line.strip() for line in mermaid_code.split('\n') if line.strip()]
         
-        has_flowchart_declaration = False
+        if not lines:
+            self.errors.append("Empty diagram")
+            return False
+        
+        # Detect diagram type from first line
+        first_line = lines[0].lower()
+        diagram_type = None
+        
+        # Supported diagram types
+        if first_line.startswith('flowchart '):
+            diagram_type = 'flowchart'
+        elif first_line.startswith('graph '):
+            diagram_type = 'graph'
+        elif first_line.startswith('pie'):
+            diagram_type = 'pie'
+        elif first_line.startswith('gitgraph'):
+            diagram_type = 'gitgraph'
+        elif first_line.startswith('gantt'):
+            diagram_type = 'gantt'
+        elif first_line.startswith('sequencediagram') or first_line.startswith('sequencediagram'):
+            diagram_type = 'sequence'
+        elif first_line.startswith('classDiagram'):
+            diagram_type = 'class'
+        elif first_line.startswith('statediagram'):
+            diagram_type = 'state'
+        elif first_line.startswith('erdiagram'):
+            diagram_type = 'er'
+        elif first_line.startswith('journey'):
+            diagram_type = 'journey'
+        
+        if not diagram_type:
+            # Try to detect from content patterns
+            content = ' '.join(lines).lower()
+            if 'pie title' in content:
+                diagram_type = 'pie'
+            elif '-->' in content or '---' in content:
+                self.warnings.append("Detected flowchart connections but missing diagram declaration")
+                diagram_type = 'flowchart'
+            else:
+                self.errors.append("Could not determine diagram type - please add proper diagram declaration")
+                return False
+        
+        # Type-specific validation
+        if diagram_type in ['flowchart', 'graph']:
+            return self._validate_flowchart_syntax(lines)
+        elif diagram_type == 'pie':
+            return self._validate_pie_syntax(lines)
+        else:
+            # For other types, do basic validation
+            self.warnings.append(f"Basic validation only for {diagram_type} diagrams")
+            return True
+    
+    def _validate_flowchart_syntax(self, lines) -> bool:
+        """Validate flowchart-specific syntax."""
+        has_declaration = False
         
         for line_num, line in enumerate(lines, 1):
             # Skip comments
@@ -251,11 +305,15 @@ class FlowchartValidator:
                 continue
             
             # Check for flowchart declaration
-            if line.startswith('flowchart '):
-                has_flowchart_declaration = True
-                direction = line[10:].strip()
-                valid_directions = [d.value for d in Direction]
-                if direction not in valid_directions:
+            if line.startswith('flowchart ') or line.startswith('graph '):
+                has_declaration = True
+                if line.startswith('flowchart '):
+                    direction = line[10:].strip()
+                else:
+                    direction = line[6:].strip()
+                    
+                valid_directions = ['TD', 'TB', 'BT', 'RL', 'LR']
+                if direction and direction not in valid_directions:
                     self.warnings.append(f"Line {line_num}: Unknown direction '{direction}'")
             
             # Basic syntax checks
@@ -264,8 +322,31 @@ class FlowchartValidator:
                 if line.count('-->') + line.count('---') > 1:
                     self.warnings.append(f"Line {line_num}: Multiple arrows in single line")
         
-        if not has_flowchart_declaration:
-            self.errors.append("Missing 'flowchart' declaration")
+        if not has_declaration:
+            self.errors.append("Missing 'flowchart' or 'graph' declaration")
+        
+        return len(self.errors) == 0
+    
+    def _validate_pie_syntax(self, lines) -> bool:
+        """Validate pie chart syntax."""
+        has_title = False
+        has_data = False
+        
+        for line_num, line in enumerate(lines, 1):
+            if line.startswith('%%'):
+                continue
+                
+            if line.startswith('pie'):
+                if 'title' in line:
+                    has_title = True
+            elif ':' in line and '"' in line:
+                has_data = True
+        
+        if not has_title:
+            self.warnings.append("Pie chart should have a title")
+        
+        if not has_data:
+            self.errors.append("Pie chart must have data entries")
         
         return len(self.errors) == 0
     
