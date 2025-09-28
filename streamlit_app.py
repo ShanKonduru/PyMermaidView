@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PyMermaidView - Clean Streamlit Interface
+PyMermaidView - Enhanced Streamlit Interface with AI Enhancement
 """
 import streamlit as st
 import asyncio
@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Optional
 import base64
 import io
+import requests
+import json
 from PIL import Image
 
 # Import our core modules
@@ -19,7 +21,7 @@ st.set_page_config(
     page_title="PyMermaidView",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Collapsible sidebar by default
 )
 
 # Custom CSS for clean interface
@@ -53,6 +55,10 @@ if 'generated_image' not in st.session_state:
     st.session_state.generated_image = None
 if 'zoom_level' not in st.session_state:
     st.session_state.zoom_level = 100
+if 'ai_enhancing' not in st.session_state:
+    st.session_state.ai_enhancing = False
+if 'enhancement_history' not in st.session_state:
+    st.session_state.enhancement_history = []
 
 # Diagram templates
 DIAGRAM_TEMPLATES = {
@@ -130,45 +136,125 @@ DIAGRAM_TEMPLATES = {
     Campaign C: [0.57, 0.69]"""
 }
 
+def enhance_with_ai(mermaid_code: str, enhancement_type: str = "improve") -> Optional[str]:
+    """Enhance Mermaid syntax using Ollama local LLM"""
+    
+    # Ollama API endpoint (default local installation)
+    ollama_url = "http://localhost:11434/api/generate"
+    
+    # Define enhancement prompts
+    prompts = {
+        "improve": f"""You are a Mermaid diagram expert. Please improve and enhance the following Mermaid diagram syntax:
+
+{mermaid_code}
+
+Make the diagram more professional, add better styling, improve node names, add colors if appropriate, and ensure best practices. Return ONLY the enhanced Mermaid syntax without any explanations or markdown formatting.""",
+        
+        "add_styling": f"""You are a Mermaid diagram expert. Please add professional styling, colors, and visual enhancements to this Mermaid diagram:
+
+{mermaid_code}
+
+Add appropriate colors, styling, and visual improvements while keeping the same structure. Return ONLY the enhanced Mermaid syntax without explanations.""",
+        
+        "optimize": f"""You are a Mermaid diagram expert. Please optimize and restructure this Mermaid diagram for better clarity and readability:
+
+{mermaid_code}
+
+Improve the layout, node connections, and overall structure while maintaining the same meaning. Return ONLY the optimized Mermaid syntax without explanations."""
+    }
+    
+    try:
+        # Prepare the request
+        payload = {
+            "model": "llama3.2",  # You can change this to your preferred model
+            "prompt": prompts.get(enhancement_type, prompts["improve"]),
+            "stream": False,
+            "options": {
+                "temperature": 0.3,  # Lower temperature for more consistent results
+                "num_predict": 1000  # Limit response length
+            }
+        }
+        
+        # Make request to Ollama with shorter timeout
+        response = requests.post(ollama_url, json=payload, timeout=15)
+        
+        if response.status_code == 200:
+            result = response.json()
+            enhanced_code = result.get('response', '').strip()
+            
+            # Clean up the response (remove any markdown formatting)
+            if enhanced_code.startswith('```'):
+                lines = enhanced_code.split('\n')
+                enhanced_code = '\n'.join(lines[1:])
+            if enhanced_code.endswith('```'):
+                lines = enhanced_code.split('\n')
+                enhanced_code = '\n'.join(lines[:-1])
+            
+            # Additional cleanup - remove common AI response patterns
+            enhanced_code = enhanced_code.replace('mermaid\n', '').strip()
+            
+            return enhanced_code if enhanced_code else None
+        else:
+            st.error(f"Ollama responded with status code: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        st.error(f"AI Enhancement Error: {str(e)}")
+        return None
+
 def main():
     # Title
     st.markdown('<h1 class="main-title">PyMermaidView</h1>', unsafe_allow_html=True)
     
-    # Sidebar - Image Generation Config
+    # Sidebar - Collapsible configuration
     with st.sidebar:
-        st.header("⚙️ Image Config")
+        st.header("⚙️ Configuration")
         
-        theme = st.selectbox(
-            "Theme",
-            options=["default", "dark", "forest", "neutral"],
-            index=0
-        )
+        # Image Generation Settings
+        with st.expander("🖼️ Image Generation", expanded=True):
+            theme = st.selectbox(
+                "Theme",
+                options=["default", "dark", "forest", "neutral"],
+                index=0
+            )
+            
+            output_format = st.selectbox(
+                "Format",
+                options=["png", "svg", "pdf"],
+                index=0
+            )
+            
+            width = st.number_input("Width", min_value=400, max_value=2400, value=800, step=100)
+            height = st.number_input("Height", min_value=300, max_value=1800, value=600, step=100)
+            scale = st.slider("Scale", min_value=1.0, max_value=3.0, value=2.0, step=0.5)
         
-        output_format = st.selectbox(
-            "Format",
-            options=["png", "svg", "pdf"],
-            index=0
-        )
-        
-        width = st.number_input("Width", min_value=400, max_value=2400, value=800, step=100)
-        height = st.number_input("Height", min_value=300, max_value=1800, value=600, step=100)
-        scale = st.slider("Scale", min_value=1.0, max_value=3.0, value=2.0, step=0.5)
-        
-        st.divider()
-        
-        # Zoom controls for preview
-        st.header("🔍 Preview Zoom")
-        zoom_col1, zoom_col2 = st.columns(2)
-        with zoom_col1:
-            if st.button("🔍 Zoom In"):
-                st.session_state.zoom_level = min(200, st.session_state.zoom_level + 25)
-                st.rerun()
-        with zoom_col2:
-            if st.button("🔍 Zoom Out"):
-                st.session_state.zoom_level = max(50, st.session_state.zoom_level - 25)
-                st.rerun()
-        
-        st.text(f"Zoom: {st.session_state.zoom_level}%")
+        # AI Enhancement Setup
+        with st.expander("🤖 AI Enhancement Setup", expanded=False):
+            st.markdown("""
+            **Ollama Local LLM Setup:**
+            
+            1. Install Ollama: `curl -fsSL https://ollama.ai/install.sh | sh`
+            2. Start Ollama: `ollama serve`
+            3. Pull model: `ollama pull llama3.2`
+            4. Verify: `curl http://localhost:11434/api/tags`
+            
+            **Status Check:**
+            """)
+            
+            # Check Ollama status
+            try:
+                response = requests.get("http://localhost:11434/api/tags", timeout=2)
+                if response.status_code == 200:
+                    st.success("✅ Ollama is running")
+                    models = response.json().get('models', [])
+                    if models:
+                        st.info(f"📚 Available models: {len(models)}")
+                    else:
+                        st.warning("⚠️ No models found - run 'ollama pull llama3.2'")
+                else:
+                    st.error("❌ Ollama not responding")
+            except:
+                st.error("❌ Ollama not running - start with 'ollama serve'")
     
     # Main layout - two columns
     col1, col2 = st.columns([1, 1])
@@ -200,8 +286,8 @@ def main():
         # Store in session state
         st.session_state.mermaid_code = mermaid_code
         
-        # Action buttons
-        button_col1, button_col2 = st.columns(2)
+        # Action buttons - 3 columns now
+        button_col1, button_col2, button_col3 = st.columns(3)
         
         with button_col1:
             if st.button("🔍 Validate Syntax", type="primary"):
@@ -210,6 +296,30 @@ def main():
         with button_col2:
             if st.button("🎨 Generate Image", type="primary"):
                 generate_image(mermaid_code, theme, output_format, width, height, scale)
+        
+        with button_col3:
+            # AI Enhancement button
+            if st.button("🤖 Enhance with AI", type="secondary", help="Improve diagram using local Ollama LLM"):
+                enhance_with_ollama(mermaid_code)
+        
+        # AI Enhancement options (collapsible)
+        with st.expander("🎛️ AI Enhancement Options", expanded=False):
+            enhancement_type = st.selectbox(
+                "Enhancement Type",
+                options=["improve", "add_styling", "optimize"],
+                format_func=lambda x: {
+                    "improve": "🔧 General Improvement",
+                    "add_styling": "🎨 Add Visual Styling", 
+                    "optimize": "⚡ Optimize Structure"
+                }[x],
+                help="Choose the type of AI enhancement to apply"
+            )
+            
+            # Store enhancement type in session state
+            st.session_state.enhancement_type = enhancement_type
+            
+            if st.session_state.enhancement_history:
+                st.info(f"💡 {len(st.session_state.enhancement_history)} enhancement(s) applied in this session")
         
         # Show validation results
         if st.session_state.validation_result:
@@ -227,7 +337,28 @@ def main():
     
     # Right pane - Preview
     with col2:
-        st.header("🖼️ Image Preview")
+        # Header with zoom controls
+        preview_col1, preview_col2, preview_col3, preview_col4 = st.columns([3, 1, 1, 1])
+        
+        with preview_col1:
+            st.header("🖼️ Image Preview")
+        
+        # Zoom controls in the preview area
+        if st.session_state.generated_image:
+            with preview_col2:
+                if st.button("🔍➕", help="Zoom In", key="zoom_in_preview"):
+                    st.session_state.zoom_level = min(200, st.session_state.zoom_level + 25)
+                    st.rerun()
+            
+            with preview_col3:
+                if st.button("🔍➖", help="Zoom Out", key="zoom_out_preview"):
+                    st.session_state.zoom_level = max(50, st.session_state.zoom_level - 25)
+                    st.rerun()
+            
+            with preview_col4:
+                if st.button("🔄", help="Reset Zoom", key="reset_zoom"):
+                    st.session_state.zoom_level = 100
+                    st.rerun()
         
         if st.session_state.generated_image:
             image_path = st.session_state.generated_image
@@ -246,19 +377,77 @@ def main():
                 
                 st.image(image, caption=f"Generated Diagram (Zoom: {st.session_state.zoom_level}%)")
                 
-                # Download button
-                with open(image_path, "rb") as file:
-                    st.download_button(
-                        label="💾 Download Image",
-                        data=file.read(),
-                        file_name=f"diagram.{output_format}",
-                        mime=f"image/{output_format}"
-                    )
+                # Download and zoom info
+                download_col1, download_col2 = st.columns([2, 1])
+                
+                with download_col1:
+                    # Download button
+                    with open(image_path, "rb") as file:
+                        st.download_button(
+                            label="💾 Download Image",
+                            data=file.read(),
+                            file_name=f"diagram.{output_format}",
+                            mime=f"image/{output_format}"
+                        )
+                
+                with download_col2:
+                    st.info(f"🔍 Zoom: {st.session_state.zoom_level}%")
                 
             except Exception as e:
                 st.error(f"Error displaying image: {e}")
         else:
             st.info("👆 Generate an image to see the preview here")
+            st.markdown("---")
+            st.markdown("**🔍 Zoom Controls**")
+            st.markdown("Zoom controls will appear here once an image is generated")
+
+def enhance_with_ollama(mermaid_code: str):
+    """Handle AI enhancement using Ollama"""
+    
+    if not mermaid_code.strip():
+        st.error("Please enter Mermaid syntax first")
+        return
+    
+    enhancement_type = st.session_state.get('enhancement_type', 'improve')
+    
+    # Show progress
+    progress_placeholder = st.empty()
+    progress_placeholder.info(f"🤖 Enhancing diagram with AI ({enhancement_type})...")
+    
+    try:
+        # Call AI enhancement
+        enhanced_code = enhance_with_ai(mermaid_code, enhancement_type)
+        
+        if enhanced_code and enhanced_code.strip() and enhanced_code != mermaid_code:
+            # Store the enhancement
+            st.session_state.enhancement_history.append({
+                'original': mermaid_code,
+                'enhanced': enhanced_code,
+                'type': enhancement_type
+            })
+            
+            # Update the mermaid code
+            st.session_state.mermaid_code = enhanced_code
+            
+            # Clear progress and show success
+            progress_placeholder.empty()
+            st.success(f"✨ Diagram enhanced successfully using {enhancement_type}!")
+            st.info("💡 The enhanced code has been loaded in the editor. Click refresh or generate to see changes.")
+            
+            # Auto-validate the enhanced code
+            validate_syntax(enhanced_code)
+            
+        elif enhanced_code == mermaid_code:
+            progress_placeholder.empty()
+            st.warning("🤔 AI suggested no changes - your diagram is already well-optimized!")
+        else:
+            progress_placeholder.empty()
+            st.error("❌ AI enhancement failed. Please check if Ollama is running on localhost:11434")
+            
+    except Exception as e:
+        progress_placeholder.empty()
+        st.error(f"❌ Enhancement failed: {str(e)}")
+        st.info("💡 Make sure Ollama is running: `ollama serve`")
 
 def validate_syntax(mermaid_code: str):
     """Validate Mermaid syntax"""
