@@ -15,5 +15,13 @@ echo 💡 Press Ctrl+C to stop the server
 echo.
 pause
 echo Starting Streamlit server...
-cd ..
-streamlit run streamlit_app.py
+
+REM Detect if we're in project root or scripts directory
+if exist "src\" (
+	REM In project root
+	python -m streamlit run streamlit_app.py
+) else (
+	REM Likely in scripts directory, go up to project root
+	cd ..
+	python -m streamlit run streamlit_app.py
+)
