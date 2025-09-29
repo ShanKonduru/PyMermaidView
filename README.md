@@ -47,6 +47,26 @@ A comprehensive Python application for generating Mermaid diagrams using Object-
 6.  **Launch Web Interface (Recommended):**
     Run `streamlit run streamlit_app.py --server.port 8507` and open <http://localhost:8507>
 
+### Installation (macOS/Linux)
+
+1.  Initialize git:
+    Run `scripts/000_init.sh` (optional; respects GIT_USER_NAME and GIT_USER_EMAIL env vars).
+
+2.  Create a virtual environment:
+    Run `scripts/001_env.sh`.
+
+3.  Activate the virtual environment:
+    Run `source scripts/002_activate.sh` (or `source .venv/bin/activate`).
+
+4.  Install dependencies and Playwright:
+    Run `scripts/003_setup.sh`.
+
+5.  Run demonstrations:
+    Run `scripts/004_run.sh` or `python3 main.py`.
+
+6.  Launch Web Interface (Recommended):
+    Run `scripts/start_web_ui.sh` (defaults to http://localhost:8501), or `streamlit run streamlit_app.py --server.port 8507`.
+
 ### 📦 **Dependencies**
 
 **Core Requirements:**
